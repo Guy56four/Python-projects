@@ -1,6 +1,6 @@
 import pygame
 from settings  import *
-from tetromino import Tetromino
+from Tetromino import Tetromino
 
 #Initialize pygame
 pygame.init()
