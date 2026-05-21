@@ -1,10 +1,14 @@
 import telegram # type: ignore
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import MessageHandler, filters, ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 from weather import get_weather
+import random
 
 #Bot token
-TOKEN ="8683367558:AAGXtHDMcwipyCqSv6QGu2VaWQtt-44X-tI"
+TOKEN ="8683367558:AAGAy4bvU_szrc4v_RSDz4HJkZ-43p19IL0"
+
+#active games for each user
+games ={}
 
 #start command
 async def start(update: Update, context: ContextTypes. DEFAULT_TYPE):
@@ -26,7 +30,9 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "weather":
         await query.message.reply_text("Send me a city name")
     elif query.data == "guess":
-        await query.message.reply_text("Starting number guess game!")
+        user_id = query.from_user.id
+        games[user_id] = {'number': random.randint(1,100), 'attempts' : 0}
+        await query.edit_message_text("I picked a number  between 1-100!\n Send your gueess!")
     elif query.data =="help":
         await query.message.reply_text(
             "Available commands: \n\n"
@@ -51,8 +57,31 @@ async def weather (update: telegram.Update, context:ContextTypes.DEFAULT_TYPE):
     result = get_weather(city)
     await update.message.reply_text(result)
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    text = update.message.text
+
+    if user_id in games:
+        try:
+            guess = int(text)
+            games[user_id]['attempts'] +=1
+            secret = games [user_id]['number']
+
+            if guess < secret:
+                await update.message.reply_text("Too low! Try again!")
+            elif guess > secret: 
+                await update.message.reply_text("Too high! Try again!")
+            else:
+                attempts = games [user_id]['attempts']
+                del games [user_id]
+                await update.message.reply_text(f" You got it in {attempts} attempts!")
+        except ValueError:
+            await update.message.reply_text("Please send a number!")
+
+
 #Run the bot
 app = ApplicationBuilder ().token(TOKEN).build()
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler (CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help))
 app.add_handler(CommandHandler("weather", weather))
