@@ -5,14 +5,14 @@ from weather import get_weather
 import random
 
 #Bot token
-TOKEN ="8683367558:AAGAy4bvU_szrc4v_RSDz4HJkZ-43p19IL0"
-
+TOKEN ="8683367558:AAH7wo5qOMu6J1YjwxIQgtM20TG2d-iC4GU"
 #active games for each user
 games ={}
 
 #start command
 async def start(update: Update, context: ContextTypes. DEFAULT_TYPE):
     keyboard = [
+        [InlineKeyboardButton("Calculator",callback_data='calc')],
         [InlineKeyboardButton("Weather",callback_data="weather")],
         [InlineKeyboardButton("Guess number", callback_data ="guess")],
         [InlineKeyboardButton("Help",callback_data = "help")],
@@ -22,6 +22,7 @@ async def start(update: Update, context: ContextTypes. DEFAULT_TYPE):
         "Hello, I`m your personal bot! \nWhat would you like to do?",
         reply_markup=reply_markup
     )
+
 #button clicks
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -35,11 +36,13 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("I picked a number  between 1-100!\n Send your gueess!")
     elif query.data =="help":
         await query.message.reply_text(
-            "Available commands: \n\n"
+            "Available commands: \n"
             "/start -Start the bot\n"
             "/weather [city] - Get weather\n " 
-            "/help - Show this message"
-        )
+            "/help - Show this message")
+    elif query.data == "calc": 
+        await query.edit_message_text("Send me a math  expression! \nExample: 10/5")
+        
 #help command
 async def help(update: telegram.Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -77,6 +80,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(f" You got it in {attempts} attempts!")
         except ValueError:
             await update.message.reply_text("Please send a number!")
+    else:
+        try:
+            result = eval (text)
+            await update.message.reply_text(f"Result: { result}")
+        except:
+            await update.message.reply_text("I do not understand that. Try \start   ")
 
 
 #Run the bot
@@ -85,6 +94,6 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler (CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help))
 app.add_handler(CommandHandler("weather", weather))
-print('Bot is runnig....')
 app.add_handler(CallbackQueryHandler(button_click))
+print('Bot is runnig....')
 app.run_polling()
