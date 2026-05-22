@@ -5,13 +5,15 @@ from weather import get_weather
 import random
 
 #Bot token
-TOKEN ="8683367558:AAH7wo5qOMu6J1YjwxIQgtM20TG2d-iC4GU"
+TOKEN ="8683367558:AAFdebAaM9MznQ2FbA-qACgaVQVG05MzstE"
 #active games for each user
 games ={}
+tasks = {}
 
 #start command
 async def start(update: Update, context: ContextTypes. DEFAULT_TYPE):
     keyboard = [
+        [InlineKeyboardButton("Callculator", callback_data='to-do')],
         [InlineKeyboardButton("Calculator",callback_data='calc')],
         [InlineKeyboardButton("Weather",callback_data="weather")],
         [InlineKeyboardButton("Guess number", callback_data ="guess")],
@@ -42,6 +44,13 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/help - Show this message")
     elif query.data == "calc": 
         await query.edit_message_text("Send me a math  expression! \nExample: 10/5")
+    elif query.data =="todo":
+        await query.edit_message_text("To do list commands \n\n"
+                                      "/addtask [task] - Add a tsk \n"
+                                      "viewtasks- view all tasks \n"
+                                      "/deleteatsk[number]- delete a rask")
+        
+
         
 #help command
 async def help(update: telegram.Update, context: ContextTypes.DEFAULT_TYPE):
@@ -63,6 +72,38 @@ async def weather (update: telegram.Update, context:ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = update.message.text
+
+async def addtask(update : Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if not context.args:
+        await update.message.reply_text("Please provide a task /n Example: /addtask\nExample  Buy groceriec")
+        return
+    task = " ". join(context.args)
+    if user_id not in tasks:
+        tasks[used_id] = []
+    tasks[user_id].append(task)
+    await update.message.reply_text(f"Task added: {task}")
+
+async def viewtasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in tasks or len(tasks[user_id]) == 0:
+        await update.message.reply_text("No tasks yet!")
+        return
+    task_list ="\n".join([f"{i+1}. {t}" for i, t in enumerete (tasks[user_id])])
+    await update.message.reply_text(f"Your tasks: \n\n{task_list}")
+
+async def deletetask(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if not context.args:
+        await update.message.reply_text("Please provide a task number!\nExample: /deletetask 1")
+        return
+    try:
+        num = int(context.args[0]) -1
+        removed = tasks [used_id].pop (num)
+        await update.message.reply_text (f" Deleted task{removed}")
+    except:
+        await update.message.reply_text (f"Invalid task number")
+
 
     if user_id in games:
         try:
@@ -95,5 +136,8 @@ app.add_handler (CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help))
 app.add_handler(CommandHandler("weather", weather))
 app.add_handler(CallbackQueryHandler(button_click))
+app.add_handler(CommandHandler("addtask", addtask))
+app.add_handler(CommandHandler("viewtask", viewtasks))
+app.add_handler(CommandHandler("deletetask", deletetask))
 print('Bot is runnig....')
 app.run_polling()
